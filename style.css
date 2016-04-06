@@ -1,0 +1,134 @@
+body, html {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+#wrapper {
+  width: 610px;
+  height: auto;
+  border: 1px solid black;
+  padding: 5px;
+}
+
+#wrapper h1 {
+  margin-left: 15px;
+  font: bold 1.7em Arial, Helvetica, sans-serif;
+}
+
+#myCanvas {
+  position: relative;
+  background-image: url('cit-map-med.jpg');
+  padding: 0;
+  margin: 0;
+  border: 1px solid black;
+}
+
+#buttons {
+  margin-left: 15px;
+  margin-bottom: 15px;
+}
+
+#buttons button {
+	box-shadow:inset 0px 1px 3px 0px #91b8b3;
+	background:linear-gradient(to bottom, #a0b0ac 5%, #92a4a0 100%);
+	background-color:#a0b0ac;
+	border-radius:5px;
+	border:1px solid #a0b0ac;
+	display:inline-block;
+	color:black;
+  font: 15px Arial;
+	padding:5px 9px;
+	text-decoration:none;
+}
+
+
+#buttons button:active {
+	position:relative;
+	top:1px;
+}
+
+#lightBoxDiv {
+  width: 100%;
+  height: 100%;
+  top: 0px;
+  left: 0px;
+  background-color: rgba(55, 55, 55, 0.5);
+  position: fixed;
+  display: none;
+}
+
+#dialogContainer {
+  border-radius: 25px;
+  background: rgba(55, 55, 55, 1.0);
+  padding: 20px;
+  width: 200px;
+  height: 150px;
+  display: inline-block;
+  padding: 30px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  font-size: 22px;
+}
+
+#dialogContainer form {
+  display: inline-block;
+  padding: 30px;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+#textField {
+  border: 2px solid rgb(7, 122, 176);
+  border-radius: 3px;
+  line-height: 20px;
+  margin-bottom: 15px;
+  width: 150px;
+}
+
+#submitButton {
+  border-radius: 5px;
+  background-color: rgb(178, 188, 193);
+  font-size: 16px;
+}
+
+#startRecordingButton:disabled {
+  color: white;
+  background-color: #a0b0ac;
+  opacity: 0.7;
+}
+
+#canvasContainer
+{
+  position: relative;
+  padding: 0;
+}
+
+#labelDiv
+{
+  position: absolute;
+  background-color: white;
+  top: 100px;
+  right: 100px;
+  border: 3px solid black;
+  border-radius: 6px;
+  width: 100px;
+  height: 60px;
+  text-align: center;
+}
+
+#labelDiv:h2
+{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
