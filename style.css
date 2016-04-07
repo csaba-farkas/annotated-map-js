@@ -111,24 +111,3 @@ body, html {
   position: relative;
   padding: 0;
 }
-
-#labelDiv
-{
-  position: absolute;
-  background-color: white;
-  top: 100px;
-  right: 100px;
-  border: 3px solid black;
-  border-radius: 6px;
-  width: 100px;
-  height: 60px;
-  text-align: center;
-}
-
-#labelDiv:h2
-{
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}

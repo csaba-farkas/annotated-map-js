@@ -2,7 +2,18 @@
  * @author Csaba Farkas <csaba.farkas@mycit.ie>
  * Date of last modification: 27/03/2016
  */
+
 var CIRCLE_RADIUS = 10;
+var CANVAS_WIDTH = 600;
+var CANVAS_HEIGHT = 479;
+var RECT_WIDTH = 120;
+var RECT_HEIGHT = 60;
+
+//Label offsets in different quadrants
+var QUARTER_ONE_OFFSETS = [-135, -75];
+var QUARTER_TWO_OFFSETS = [15, -75];
+var QUARTER_THREE_OFFSETS = [15, 15];
+var QUARTER_FOUR_OFFSETS = [-135, -15];
 
 var myCanvas;
 var context;
@@ -16,8 +27,9 @@ var coords;
 var playBackCounter;
 var startButton;
 var playButton;
-var labelValue;
-var labelDiv;
+
+var savedCirclesForPlayback;
+var savedLinesForPlayback;
 
 window.onload = init;
 
@@ -39,6 +51,12 @@ function init() {
 	//Initialize lineCollection array
 	lineCollection = new Array();
 
+	//Initialize an array which will store circles during playback
+	savedCirclesForPlayback = new Array();
+
+	//Initialize an array which will store lines during playback
+	savedLinesForPlayback = new Array();
+
 	if(lightBoxDiv === undefined)
 	{
 		//Add lightBoxDiv
@@ -51,14 +69,6 @@ function init() {
 		//submitButton.onclick = saveCircle;
 	}
 
-	labelValue = "TEST";
-	if(labelDiv === undefined)
-	{
-		addLabel();
-	}
-
-	labelDiv = document.getElementById('labelDiv');
-
 	//Initialize playback counter --> numbe of iterations
 	playBackCounter = 0;
 
@@ -70,6 +80,7 @@ function init() {
 	//If 'Play' is clicked, playback starts
 	playButton = document.getElementById('playButton');
 	playButton.onclick = playBack;
+
 }
 
 //from quirksmode.org
@@ -176,10 +187,12 @@ function mouseClickFunction(eventObject)
  */
 function drawCircle(circle)
 {
+	context.save();
 	context.beginPath();
   context.arc(circle.X, circle.Y, circle.radius, 0, 2.0 * Math.PI);
 	context.fillStyle = 'red';
   context.fill();
+	context.restore();
 }
 
 //Save circle
@@ -291,20 +304,44 @@ function print() {
 ******************************			Label next to circle       ********************************
 **********************************************************************************************/
 //Add label to the html
-function addLabel()
+/**
+ *	@param {number} - 	X is the x coordinate of the rectangle
+ *	@param {number} - 	Y is the y coordinate of the rectangle
+ *	@param {boolean} - 	If true, stroke rectangle. If false, fill rectangle
+ *	@param {string} -		The name of the circle
+ */
+function drawLabel(X, Y, stroke, name)
 {
-	labelDiv = document.createElement("div");
+	context.beginPath();
+	context.save();
 
-	labelDiv.setAttribute("id", "label");
+	context.moveTo(X + CIRCLE_RADIUS, Y);
 
-	// Create a string containing with the html of the new div
-	html = "	<div id = \"labelDiv\">";
-	html += "		<h2 id=\"playBackLabel\">" + labelValue + "</h2>";
-	html+= "	</div>";
+	context.arcTo(X + RECT_WIDTH, Y, X + RECT_WIDTH, Y + CIRCLE_RADIUS, CIRCLE_RADIUS);
 
-	labelDiv.innerHTML = html;
+	context.arcTo(X + RECT_WIDTH, Y + RECT_HEIGHT, X + RECT_WIDTH - CIRCLE_RADIUS, Y + RECT_HEIGHT, CIRCLE_RADIUS);
 
-	document.getElementById('canvasContainer').appendChild(labelDiv);
+	context.arcTo(X, Y + RECT_HEIGHT, X, Y + RECT_HEIGHT - CIRCLE_RADIUS, CIRCLE_RADIUS);
+
+	context.arcTo(X, Y, X + CIRCLE_RADIUS, Y, CIRCLE_RADIUS);
+
+	if(stroke)
+	{
+		context.lineWidth = 5;
+		context.stroke();
+
+		context.restore();
+	}
+	else
+	{
+		context.fillStyle = "#FFFFFF";
+		context.fill();
+
+		context.restore();
+	}
+
+	context.font = "bold 20px Arial";
+	context.fillText(name, X + ((RECT_WIDTH - context.measureText(name).width) / 2), Y + 35);
 
 }
 
@@ -323,16 +360,16 @@ function print() {
 **********************************************************************************************/
 function playBack()
 {
-	startButton.disabled = true;
-
-	startButton.onclik = reset;
-
-	//Disable Recording
-	myCanvas.removeEventListener('mousemove', mouseMoveFunction);
-	myCanvas.removeEventListener('click', mouseClickFunction);
-
 	if(circleCollection.length > 0)
 	{
+		startButton.disabled = true;
+
+		startButton.onclik = reset;
+
+		//Disable Recording
+		myCanvas.removeEventListener('mousemove', mouseMoveFunction);
+		myCanvas.removeEventListener('click', mouseClickFunction);
+
 		//Clear canvas
 		clearEntireCanvas();
 
@@ -363,7 +400,7 @@ function play()
 		{
 			startButton.disabled = false;
 		}
-	}, 2000);
+	}, 2200);
 
 }
 
@@ -371,25 +408,73 @@ function play()
 //circles so the line won't overlap the circles.
 function drawPlayBack()
 {
-			if(playBackCounter == 0)
-			{
-				drawCircle(circleCollection[playBackCounter]);
-			}
-			else
-			{
-				drawLine(lineCollection[playBackCounter]);
-				drawCircle(circleCollection[playBackCounter-1]);
-				drawCircle(circleCollection[playBackCounter]);
-			}
+	var currentCircle = circleCollection[playBackCounter];
+	var previousCircle = circleCollection[playBackCounter-1];
+	var currentLine = lineCollection[playBackCounter];
 
-			labelDiv.style.top = circleCollection[playBackCounter].X + "px";
-			console.log(labelDiv.style.top);
-			labelDiv.style.left = circleCollection[playBackCounter].Y + "px";
-			console.log(labelDiv.style.left);
+	if(playBackCounter == 0)
+	{
+		drawCircle(currentCircle);
+	}
+	else
+	{
+		drawLine(currentLine);
+		drawCircle(previousCircle);
+		drawCircle(currentCircle);
+	}
 
+	var lCoords = labelCoords(currentCircle.X, currentCircle.Y);
 
+	console.log("Coords: " + labelCoords);
+
+	drawLabel(lCoords[0], lCoords[1], true, "");
+	drawLabel(lCoords[0], lCoords[1], false, currentCircle.circleName);
 }
 
+//Get the coordinates of the label
+function labelCoords(X, Y)
+{
+	//Calculate the area of each quarter
+	var areaQ1 = X * Y;
+	var areaQ2 = (CANVAS_WIDTH - X) * Y;
+	var areaQ3 = (CANVAS_WIDTH - X) * (CANVAS_HEIGHT - Y);
+	var areaQ4 = (X * (CANVAS_HEIGHT - Y));
+
+	console.log(areaQ1 + ", " + areaQ2 + ", " + areaQ3 + ", " + areaQ4);
+
+	//Put them in an array
+	var areaArray = [areaQ1, areaQ2, areaQ3, areaQ4];
+
+	//get the largest value
+	var largestArea = Math.max.apply(Math, areaArray);
+
+	switch(largestArea)
+	{
+		case areaQ1:
+		return [
+			X + QUARTER_ONE_OFFSETS[0],
+			Y + QUARTER_ONE_OFFSETS[1]
+		];
+		break;
+		case areaQ2:
+		return [
+			X + QUARTER_TWO_OFFSETS[0],
+			Y + QUARTER_TWO_OFFSETS[1]
+		];
+		break;
+		case areaQ3:
+		return [
+			X + QUARTER_THREE_OFFSETS[0],
+			Y + QUARTER_THREE_OFFSETS[1]
+		];
+		break;
+		default:
+		return [
+			X + QUARTER_FOUR_OFFSETS[0],
+			Y + QUARTER_FOUR_OFFSETS[1]
+		];
+	}
+}
 
 /************************************************************************************
 ****************** Reset - Start recording button listener	*************************
