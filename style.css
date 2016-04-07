@@ -19,7 +19,6 @@ body, html {
 }
 
 #myCanvas {
-  position: relative;
   background-image: url('cit-map-med.jpg');
   padding: 0;
   margin: 0;
@@ -27,8 +26,7 @@ body, html {
 }
 
 #buttons {
-  margin-left: 15px;
-  margin-bottom: 15px;
+  margin: 20px;
 }
 
 #buttons button {
@@ -46,17 +44,16 @@ body, html {
 
 
 #buttons button:active {
-	position:relative;
 	top:1px;
 }
 
 #lightBoxDiv {
+  position: absolute;
   width: 100%;
   height: 100%;
-  top: 0px;
-  left: 0px;
+  top: 0;
+  left: 0;
   background-color: rgba(55, 55, 55, 0.5);
-  position: fixed;
   display: none;
 }
 
@@ -100,7 +97,7 @@ body, html {
   font-size: 16px;
 }
 
-#startRecordingButton:disabled {
+button:disabled {
   color: white;
   background-color: #a0b0ac;
   opacity: 0.7;
@@ -109,5 +106,4 @@ body, html {
 #canvasContainer
 {
   position: relative;
-  padding: 0;
 }

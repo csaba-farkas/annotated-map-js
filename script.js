@@ -173,6 +173,8 @@ function mouseClickFunction(eventObject)
 
 	//Get lightbox visible
 	lightBoxDiv.style.display = "block";
+	startRecordingButton.disabled = true;
+	playButton.disabled = true;
 
 	//Add focus to myTextField
 	myTextField.focus();
@@ -219,6 +221,8 @@ function saveCircle()
 	//Clear textField and close lightbox
 	myTextField.value = "";
 	lightBoxDiv.style.display = "none";
+	playButton.disabled = false;
+	startRecordingButton.disabled = false;
 }
 
 //Draw saved circles
@@ -287,7 +291,7 @@ function addLightBox()
 
 	lightBoxDiv.innerHTML = html;
 
-	document.body.appendChild(lightBoxDiv);
+	document.getElementById('canvasContainer').insertBefore(lightBoxDiv, document.getElementById('myCanvas'));
 
 }
 
