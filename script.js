@@ -1,6 +1,6 @@
 /**
  * @author Csaba Farkas <csaba.farkas@mycit.ie>
- * Date of last modification: 27/03/2016
+ * Date of last modification: 07/04/2016
  */
 
 var CIRCLE_RADIUS = 10;
@@ -360,6 +360,9 @@ function print() {
 **********************************************************************************************/
 function playBack()
 {
+	savedCirclesForPlayback = new Array();
+	savedLinesForPlayback = new Array();
+
 	if(circleCollection.length > 0)
 	{
 		startButton.disabled = true;
@@ -398,9 +401,14 @@ function play()
 		}
 		else
 		{
-			startButton.disabled = false;
+			setTimeout(function()
+			{
+				clearEntireCanvas();
+				redrawPreviousObjects();
+				startButton.disabled = false;
+			}, 2000);
 		}
-	}, 2200);
+	}, 2000);
 
 }
 
@@ -415,20 +423,43 @@ function drawPlayBack()
 	if(playBackCounter == 0)
 	{
 		drawCircle(currentCircle);
+
+		//save first circle
+		savedCirclesForPlayback[0] = currentCircle;
 	}
 	else
 	{
+		clearEntireCanvas();
+		redrawPreviousObjects();
 		drawLine(currentLine);
 		drawCircle(previousCircle);
 		drawCircle(currentCircle);
+
+		//save new line and circle
+		savedCirclesForPlayback[playBackCounter] = currentCircle;
+		savedLinesForPlayback[playBackCounter] = currentLine;
 	}
 
 	var lCoords = labelCoords(currentCircle.X, currentCircle.Y);
 
-	console.log("Coords: " + labelCoords);
-
 	drawLabel(lCoords[0], lCoords[1], true, "");
 	drawLabel(lCoords[0], lCoords[1], false, currentCircle.circleName);
+
+}
+
+function redrawPreviousObjects()
+{
+	//Draw lines
+	for(var i = 1; i < savedLinesForPlayback.length; i++)
+	{
+		drawLine(savedLinesForPlayback[i]);
+	}
+
+	//Draw circles
+	for(var j = 0; j < savedCirclesForPlayback.length; j++)
+	{
+		drawCircle(savedCirclesForPlayback[j]);
+	}
 }
 
 //Get the coordinates of the label
