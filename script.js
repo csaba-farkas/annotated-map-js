@@ -6,14 +6,13 @@
 var CIRCLE_RADIUS = 10;
 var CANVAS_WIDTH = 600;
 var CANVAS_HEIGHT = 479;
-var RECT_WIDTH = 120;
 var RECT_HEIGHT = 60;
 
 //Label offsets in different quadrants
-var QUARTER_ONE_OFFSETS = [-135, -75];
-var QUARTER_TWO_OFFSETS = [15, -75];
-var QUARTER_THREE_OFFSETS = [15, 15];
-var QUARTER_FOUR_OFFSETS = [-135, -15];
+var QUARTER_ONE_Y_OFFSET = -75;
+var QUARTER_TWO_Y_OFFSET = -75;
+var QUARTER_THREE_Y_OFFSET = 15;
+var QUARTER_FOUR_Y_OFFSET = 15;
 
 var myCanvas;
 var context;
@@ -27,6 +26,7 @@ var coords;
 var playBackCounter;
 var startButton;
 var playButton;
+var rectWidth;
 
 var savedCirclesForPlayback;
 var savedLinesForPlayback;
@@ -319,11 +319,17 @@ function drawLabel(X, Y, stroke, name)
 	context.beginPath();
 	context.save();
 
+	context.font = "bold 20px Arial";
+
+	//Get the width of the text
+	textWidth = context.measureText(name).width;
+	rectWidth = textWidth + 20;
+
 	context.moveTo(X + CIRCLE_RADIUS, Y);
 
-	context.arcTo(X + RECT_WIDTH, Y, X + RECT_WIDTH, Y + CIRCLE_RADIUS, CIRCLE_RADIUS);
+	context.arcTo(X + rectWidth, Y, X + rectWidth, Y + CIRCLE_RADIUS, CIRCLE_RADIUS);
 
-	context.arcTo(X + RECT_WIDTH, Y + RECT_HEIGHT, X + RECT_WIDTH - CIRCLE_RADIUS, Y + RECT_HEIGHT, CIRCLE_RADIUS);
+	context.arcTo(X + rectWidth, Y + RECT_HEIGHT, X + rectWidth - CIRCLE_RADIUS, Y + RECT_HEIGHT, CIRCLE_RADIUS);
 
 	context.arcTo(X, Y + RECT_HEIGHT, X, Y + RECT_HEIGHT - CIRCLE_RADIUS, CIRCLE_RADIUS);
 
@@ -345,7 +351,7 @@ function drawLabel(X, Y, stroke, name)
 	}
 
 	context.font = "bold 20px Arial";
-	context.fillText(name, X + ((RECT_WIDTH - context.measureText(name).width) / 2), Y + 35);
+	context.fillText(name, X + ((rectWidth - textWidth) / 2), Y + 35);
 
 }
 
@@ -444,9 +450,9 @@ function drawPlayBack()
 		savedLinesForPlayback[playBackCounter] = currentLine;
 	}
 
-	var lCoords = labelCoords(currentCircle.X, currentCircle.Y);
+	var lCoords = labelCoords(currentCircle.X, currentCircle.Y, currentCircle.circleName);
 
-	drawLabel(lCoords[0], lCoords[1], true, "");
+	drawLabel(lCoords[0], lCoords[1], true, currentCircle.circleName);
 	drawLabel(lCoords[0], lCoords[1], false, currentCircle.circleName);
 
 }
@@ -467,15 +473,27 @@ function redrawPreviousObjects()
 }
 
 //Get the coordinates of the label
-function labelCoords(X, Y)
+function labelCoords(X, Y, name)
 {
+	context.save();
+
+	context.font = "bold 20px Arial";
+
+	//Calculate text width
+	var textWidth = context.measureText(name).width;
+
+	context.restore();
+
+	//Add 20 for the padding +
+	//20 for the radius of the corners +
+	labelWidth = textWidth + 20;
+
+
 	//Calculate the area of each quarter
 	var areaQ1 = X * Y;
 	var areaQ2 = (CANVAS_WIDTH - X) * Y;
 	var areaQ3 = (CANVAS_WIDTH - X) * (CANVAS_HEIGHT - Y);
 	var areaQ4 = (X * (CANVAS_HEIGHT - Y));
-
-	console.log(areaQ1 + ", " + areaQ2 + ", " + areaQ3 + ", " + areaQ4);
 
 	//Put them in an array
 	var areaArray = [areaQ1, areaQ2, areaQ3, areaQ4];
@@ -483,30 +501,34 @@ function labelCoords(X, Y)
 	//get the largest value
 	var largestArea = Math.max.apply(Math, areaArray);
 
+	//Return the coordinates of the label, which is going to be
+	//placed into the largest quarter are, which is created by
+	//the intersection of x and y lines going through the center-point
+	//of the circle
 	switch(largestArea)
 	{
 		case areaQ1:
 		return [
-			X + QUARTER_ONE_OFFSETS[0],
-			Y + QUARTER_ONE_OFFSETS[1]
+			X - (labelWidth + 15),
+			Y + QUARTER_ONE_Y_OFFSET
 		];
 		break;
 		case areaQ2:
 		return [
-			X + QUARTER_TWO_OFFSETS[0],
-			Y + QUARTER_TWO_OFFSETS[1]
+			X + 15,
+			Y + QUARTER_TWO_Y_OFFSET
 		];
 		break;
 		case areaQ3:
 		return [
-			X + QUARTER_THREE_OFFSETS[0],
-			Y + QUARTER_THREE_OFFSETS[1]
+			X + 15,
+			Y + QUARTER_THREE_Y_OFFSET
 		];
 		break;
 		default:
 		return [
-			X + QUARTER_FOUR_OFFSETS[0],
-			Y + QUARTER_FOUR_OFFSETS[1]
+			X - (labelWidth + 15),
+			Y + QUARTER_FOUR_Y_OFFSET
 		];
 	}
 }
