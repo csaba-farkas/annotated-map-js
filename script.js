@@ -1,5 +1,6 @@
 /**
  * @author Csaba Farkas <csaba.farkas@mycit.ie>
+ * Date of start of project:  22/03/2016
  * Date of last modification: 07/04/2016
  */
 
@@ -16,20 +17,31 @@ var QUARTER_FOUR_Y_OFFSET = 15;
 
 var myCanvas;
 var context;
+
 var redCircle;
+
 var circleCollection;
 var lineCollection;
-var counter;
+var tableRowCollection;
+
 var lightBoxDiv;
 var myTextField;
 var coords;
+
+var counter;
 var playBackCounter;
+
 var startButton;
 var playButton;
+
 var rectWidth;
 
 var savedCirclesForPlayback;
 var savedLinesForPlayback;
+
+//Table variables
+var tableDiv;
+var tableBody;
 
 window.onload = init;
 
@@ -67,6 +79,35 @@ function init() {
 
 		document.getElementById('submitButton').onclick = saveCircle;
 		//submitButton.onclick = saveCircle;
+	}
+
+	if(tableDiv === undefined)
+	{
+		//Add table div
+		tableDiv = document.createElement("div");
+		tableDiv.setAttribute('id', 'table');
+
+		var html = "	<table>";
+		html +=	"				<colgroup>";
+		html += "					<col span=\"1\" id=\"col1\" />";
+		html += "					<col span=\"1\" id=\"col2\" />";
+		html += "					<col span=\"1\" id=\"col3\" />";
+		html += "				</colgroup>";
+		html += "				<thead id=\"tableHead\">";
+		html += "					<tr>";
+		html += "						<th>Move</th>";
+		html += "						<th>Name/Coords</th>";
+		html += "						<th>Delete</th>";
+		html += "					</tr>";
+		html += "				</thead>";
+		html += "				<tbody id=\"tableBody\">";
+		html += "				</tbody";
+		html += "			</table>";
+
+		tableDiv.innerHTML = html;
+
+		document.getElementById('wrapper').appendChild(tableDiv);
+
 	}
 
 	//Initialize playback counter --> numbe of iterations
@@ -183,8 +224,10 @@ function mouseClickFunction(eventObject)
 /*************************************************************************
 ********************* 				Circles										******************
 *************************************************************************/
-//Draw circle
+
 /**
+ *	Method draws the param circle on canvas.
+ *
  *	@param Circle object
  */
 function drawCircle(circle)
@@ -197,7 +240,11 @@ function drawCircle(circle)
 	context.restore();
 }
 
-//Save circle
+/**
+ *	Method is attached to the 'Save Caption' button as a click event listener.
+ *	It gets the center point coordinates of the new circle and saves it as a
+ *	circle object.
+ */
 function saveCircle()
 {
 	//Create circle object based on the coordinates
@@ -215,17 +262,25 @@ function saveCircle()
 		saveLines();
 	}
 
-	//Increment counter
-	counter++;
-
 	//Clear textField and close lightbox
 	myTextField.value = "";
 	lightBoxDiv.style.display = "none";
+
+	//Create new row in the table
+	createNewTableRow();
+
+	//Increment counter
+	counter++;
+
+	//Re-enabling the 'Start Recording' and the 'Play' buttons
 	playButton.disabled = false;
 	startRecordingButton.disabled = false;
 }
 
-//Draw saved circles
+/**
+ *	This method draws all the circles which are saved in the 'circleCollection'
+ *	array to the canvas.
+ */
 function drawSavedCircles()
 {
 
@@ -234,6 +289,16 @@ function drawSavedCircles()
 		drawCircle(circleCollection[i]);
 	}
 
+}
+
+function deleteCircle(elem)
+{
+	console.log("test delete circle: " + elem.parentElement.nodeName);
+	console.log("test delete - children of tbody:");
+	for(var i = 0; i < document.getElementsByTagName('tbody')[0].children; i++)
+	{
+		console.log("Node name " + i + ": " + document.getElementsByTagName('tbody')[0].children[i].nodeName);
+	}
 }
 
 /*********************************************************************************
@@ -281,7 +346,6 @@ function addLightBox()
 
 	lightBoxDiv.setAttribute("id", "lightBoxDiv");
 
-	// Create a string containing with the html of the new div
 	html = "	<div id = \"dialogContainer\">";
 	html += "		<form />";
 	html += "			<input id=\"textField\" type=\"text\" name=\"markerName\" />"
@@ -534,11 +598,49 @@ function labelCoords(X, Y, name)
 }
 
 /************************************************************************************
+******************             Create new table row	        *************************
+************************************************************************************/
+
+function createNewTableRow()
+{
+	var tableRow = document.createElement("tr");
+
+	html = "	<td>";
+	html += "		<button>Up</button>";
+	html += "		<button>Down</buton>";
+	html += "	</td>";
+	html += "	<td>";
+	html += "		<label for=\"\">Label: </label>";
+	html += "		<input type=\"text\" value=\"" + circleCollection[counter].circleName + "\" />";
+	html += "		<span>x: " + circleCollection[counter].X + "</span>";
+	html += "		<span> y: " + circleCollection[counter].Y + "</span>";
+	html += "	</td>";
+	html += "	<td>";
+	html += "		<button onclick=\"deleteCircle(this)\">Delete</button>";
+	html += "	</td>";
+
+
+	tableRow.innerHTML = html;
+
+	document.getElementById('tableBody').appendChild(tableRow);
+}
+
+/************************************************************************************
 ****************** Reset - Start recording button listener	*************************
 ************************************************************************************/
 function reset()
 {
 	clearEntireCanvas();
+
+	//Delete all tablerows
+	//Get all rows
+	var tableRows = document.getElementsByTagName('tr');
+	//Remove all rows except the first one (header)
+	for(var i = tableRows.length-1; i > 0; i--)
+	{
+		document.getElementById('tableBody').removeChild(tableRows[i]);
+	}
+
 	init();
 	myCanvas.addEventListener('mousemove', mouseMoveFunction);
 	myCanvas.addEventListener('click', mouseClickFunction);
