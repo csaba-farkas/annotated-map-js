@@ -21,6 +21,8 @@ var context;
 var redCircle;
 
 var circleCollection;
+var tempCircleCollection;
+
 var lineCollection;
 var tableRowCollection;
 
@@ -41,7 +43,14 @@ var savedLinesForPlayback;
 
 //Table variables
 var tableDiv;
+var table;
+var tableHead;
 var tableBody;
+
+var controls;
+
+var timedPlayback;
+var lastCyclePlayBack;
 
 window.onload = init;
 
@@ -84,27 +93,60 @@ function init() {
 	if(tableDiv === undefined)
 	{
 		//Add table div
-		tableDiv = document.createElement("div");
-		tableDiv.setAttribute('id', 'table');
+		tableDiv = document.createElement('div');
+		tableDiv.setAttribute('id', 'tableDiv');
 
-		var html = "	<table>";
-		html +=	"				<colgroup>";
-		html += "					<col span=\"1\" id=\"col1\" />";
-		html += "					<col span=\"1\" id=\"col2\" />";
-		html += "					<col span=\"1\" id=\"col3\" />";
-		html += "				</colgroup>";
-		html += "				<thead id=\"tableHead\">";
-		html += "					<tr>";
-		html += "						<th>Move</th>";
-		html += "						<th>Name/Coords</th>";
-		html += "						<th>Delete</th>";
-		html += "					</tr>";
-		html += "				</thead>";
-		html += "				<tbody id=\"tableBody\">";
-		html += "				</tbody";
-		html += "			</table>";
+		//Create table element
+		table = document.createElement('table');
 
-		tableDiv.innerHTML = html;
+			//Create and add 'colgroup'
+			var colgroup = document.createElement('colgroup');
+
+				var col1 = document.createElement('col');
+				col1.setAttribute('span', '1');
+				col1.setAttribute('id', 'col1');
+
+				var col2 = document.createElement('col');
+				col2.setAttribute('span', '2');
+				col2.setAttribute('id', 'col2');
+
+				var col3 = document.createElement('col');
+				col3.setAttribute('span', '3');
+				col3.setAttribute('id', 'col3');
+
+			colgroup.appendChild(col1);
+			colgroup.appendChild(col2);
+			colgroup.appendChild(col3);
+
+		table.appendChild(colgroup);
+
+		//Create and add table header
+		tableHead = document.createElement('thead');
+
+			var tableHeadRow = document.createElement('tr');
+
+				var moveHeader = document.createElement('th');
+				var nameHeader = document.createElement('th');
+				var deleteHeader = document.createElement('th');
+
+					moveHeader.appendChild(document.createTextNode('Move'));
+					nameHeader.appendChild(document.createTextNode('Coords'));
+					deleteHeader.appendChild(document.createTextNode('Delete'));
+
+				tableHeadRow.appendChild(moveHeader);
+				tableHeadRow.appendChild(nameHeader);
+				tableHeadRow.appendChild(deleteHeader);
+
+			tableHead.appendChild(tableHeadRow);
+
+		table.appendChild(tableHead);
+
+			tableBody = document.createElement('tbody');
+
+		table.appendChild(tableBody);
+
+		tableDiv.appendChild(table);
+
 
 		document.getElementById('wrapper').appendChild(tableDiv);
 
@@ -120,7 +162,7 @@ function init() {
 
 	//If 'Play' is clicked, playback starts
 	playButton = document.getElementById('playButton');
-	playButton.onclick = playBack;
+	playButton.addEventListener('click', playBack);
 
 }
 
@@ -291,16 +333,6 @@ function drawSavedCircles()
 
 }
 
-function deleteCircle(elem)
-{
-	console.log("test delete circle: " + elem.parentElement.nodeName);
-	console.log("test delete - children of tbody:");
-	for(var i = 0; i < document.getElementsByTagName('tbody')[0].children; i++)
-	{
-		console.log("Node name " + i + ": " + document.getElementsByTagName('tbody')[0].children[i].nodeName);
-	}
-}
-
 /*********************************************************************************
 ******************************			Lines					********************************
 *********************************************************************************/
@@ -316,6 +348,8 @@ function drawLine(line)
 //Save line objects based on the current circles
 function saveLines()
 {
+	lineCollection = new Array();
+
 	for(var i = 1; i < circleCollection.length; i++)
 	{
 		lineCollection[i] = new Object();
@@ -434,18 +468,36 @@ function print() {
 **********************************************************************************************/
 function playBack()
 {
+	//Remove this function as 'Play' button's event listener
+	playButton.removeEventListener('click', playBack);
+
+	//Add a new event listener function which clears the timeouts and
+	//clears the canvas and restarts playback.
+	playButton.addEventListener('click', function() {
+		clearTimeout(timedPlayback);
+		clearTimeout(lastCyclePlayBack);
+		playButton.addEventListener('click', playBack);
+		clearEntireCanvas();
+		playBack();
+	});
 	savedCirclesForPlayback = new Array();
 	savedLinesForPlayback = new Array();
 
 	if(circleCollection.length > 0)
 	{
+		//Disable 'Start recording' button
 		startButton.disabled = true;
-
-		startButton.onclik = reset;
 
 		//Disable Recording
 		myCanvas.removeEventListener('mousemove', mouseMoveFunction);
 		myCanvas.removeEventListener('click', mouseClickFunction);
+
+		//Disable all control buttons and text fields
+		controls = document.getElementsByClassName('control-button');
+		for(var i = 0; i < controls.length; i++)
+		{
+			controls[i].disabled = true;
+		}
 
 		//Clear canvas
 		clearEntireCanvas();
@@ -465,7 +517,7 @@ function playBack()
 //Timeout function firing a drawPlayBack() call and a recursive play() call at every 2 seconds
 function play()
 {
-	setTimeout(function()
+	timedPlayback = setTimeout(function()
 	{
 		drawPlayBack();
 		playBackCounter++;
@@ -475,11 +527,19 @@ function play()
 		}
 		else
 		{
-			setTimeout(function()
+			lastCyclePlayBack = setTimeout(function()
 			{
+				//Redraw without last label at the end of playback
 				clearEntireCanvas();
 				redrawPreviousObjects();
+				//Re-enable 'Start recording' button and control buttons
 				startButton.disabled = false;
+				for(var i = 0; i < controls.length; i++)
+				{
+					controls[i].disabled = false;
+				}
+				//Re-initialize event listener on 'Play' button
+				playButton.addEventListener('click', playBack);
 			}, 2000);
 		}
 	}, 2000);
@@ -603,26 +663,133 @@ function labelCoords(X, Y, name)
 
 function createNewTableRow()
 {
-	var tableRow = document.createElement("tr");
+	var tableRow = document.createElement('tr');
 
-	html = "	<td>";
-	html += "		<button>Up</button>";
-	html += "		<button>Down</buton>";
-	html += "	</td>";
-	html += "	<td>";
-	html += "		<label for=\"\">Label: </label>";
-	html += "		<input type=\"text\" value=\"" + circleCollection[counter].circleName + "\" />";
-	html += "		<span>x: " + circleCollection[counter].X + "</span>";
-	html += "		<span> y: " + circleCollection[counter].Y + "</span>";
-	html += "	</td>";
-	html += "	<td>";
-	html += "		<button onclick=\"deleteCircle(this)\">Delete</button>";
-	html += "	</td>";
+		//Create all three cells
+		var moveCell = document.createElement('td')
+		var coordsCell = document.createElement('td');
+		var deleteCell = document.createElement('td');
+
+			//Create the three buttons
+			var upButton = document.createElement('button');
+			var downButton = document.createElement('button');
+			var deleteButton = document.createElement('button');
+
+			//Give classes to the newly created buttons
+			upButton.setAttribute('class', 'control-button');
+			downButton.setAttribute('class', 'control-button');
+			deleteButton.setAttribute('class', 'control-button');
+
+			//Set the text on each button
+			upButton.innerHTML = 'Up';
+			downButton.innerHTML = 'Down';
+			deleteButton.innerHTML = 'Delete';
+
+			//Add event listeners to the buttons
+			upButton.addEventListener('click', function() {
+					var parentRow = this.parentNode.parentNode;
+					var previousSiblingRow = parentRow.previousSibling;
+
+					if(previousSiblingRow !== null)
+					{
+						swapCircles(parentRow.rowIndex - 1, parentRow.rowIndex - 2);
+						tableBody.insertBefore(parentRow, previousSiblingRow);
+						redraw();
+					}
+			});
+
+			downButton.addEventListener('click', function() {
+				var parentRow = this.parentNode.parentNode;
+				var nextSiblingRow = parentRow.nextSibling;
+
+				if(nextSiblingRow !== null)
+				{
+					swapCircles(parentRow.rowIndex - 1, parentRow.rowIndex);
+					tableBody.insertBefore(parentRow, nextSiblingRow.nextSibling);
+					redraw();
+				}
+			});
+
+			deleteButton.addEventListener('click', function() {
+
+				//Get the parent row and its index (-1 because of header row)
+				var parentRow = this.parentNode.parentNode;
+				rowIndexInTbody = parentRow.rowIndex - 1;
+
+				//Remove the circle, using the index of row, from circleCollection
+				circleCollection.splice(rowIndexInTbody, 1);
+
+				//delete row
+				table.deleteRow(parentRow.rowIndex);
+
+				redraw();
+			});
+
+			//Create a label and an input field
+			var label = document.createElement('label');
+			label.innerHTML = "Label: ";
+
+			var inputField = document.createElement('input');
+			inputField.setAttribute('type', 'text');
+			inputField.setAttribute('value', circleCollection[counter].circleName);
+			inputField.setAttribute('class', 'control-button');
+
+			//Add event listener to input field
+			inputField.addEventListener('keyup', function() {
+				var circleIndex = this.parentNode.parentNode.rowIndex - 1;
+				circleCollection[circleIndex].circleName = this.value;
+			});
+
+			//Create two span nodes for coordinates
+			var xSpan = document.createElement('span');
+			var ySpan = document.createElement('span');
+			xSpan.innerHTML = "x: " + circleCollection[counter].X;
+			ySpan.innerHTML = " y: " + circleCollection[counter].Y;
+
+		//Assemble everything
+		moveCell.appendChild(upButton);
+		moveCell.appendChild(downButton);
+		coordsCell.appendChild(label);
+		coordsCell.appendChild(inputField);
+		coordsCell.appendChild(xSpan);
+		coordsCell.appendChild(ySpan);
+		deleteCell.appendChild(deleteButton);
+
+	tableRow.appendChild(moveCell);
+	tableRow.appendChild(coordsCell);
+	tableRow.appendChild(deleteCell);
 
 
-	tableRow.innerHTML = html;
+	tableBody.appendChild(tableRow);
+}
 
-	document.getElementById('tableBody').appendChild(tableRow);
+function swapCircles(circleIndex1, circleIndex2)
+{
+	var tempCircle = circleCollection[circleIndex1];
+	circleCollection[circleIndex1] = circleCollection[circleIndex2];
+	circleCollection[circleIndex2] = tempCircle;
+}
+
+function redraw()
+{
+	//Clear canvas and redraw
+	clearEntireCanvas();
+
+	//If there are more than 1 circle in the collection, recreate lines and
+	//redraw them
+	if(circleCollection.length > 1)
+	{
+		saveLines();
+		drawSavedLines();
+	}
+	//If there is only one circle left, re-initialize the lineCollection array
+	else
+	{
+		lineCollection = new Array();
+	}
+
+	//Draw circles
+	drawSavedCircles();
 }
 
 /************************************************************************************
@@ -638,7 +805,7 @@ function reset()
 	//Remove all rows except the first one (header)
 	for(var i = tableRows.length-1; i > 0; i--)
 	{
-		document.getElementById('tableBody').removeChild(tableRows[i]);
+		tableBody.removeChild(tableRows[i]);
 	}
 
 	init();
