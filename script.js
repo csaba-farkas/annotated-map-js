@@ -62,10 +62,11 @@ var tableBody;
 //'Label' textfields in table rows.
 var controls;
 
-//The two functions firing timeout need to be stored in variables,
+//The three timeout functions need to be stored in variables,
 //so timeout can be cleared if necessary
 var timedPlayback;
 var lastCyclePlayBack;
+var removePopUpLabel;
 
 window.onload = init;
 
@@ -453,8 +454,7 @@ function drawSavedLines()
 
 /**
  * Create a light box with an outer and inner container. A form in the inner container and
- * an input text field and button in the form element. (This could have been done without wrapping
- * the input fields into a form element)
+ * an input text field and button in the form element.
  */
 function addLightBox()
 {
@@ -468,6 +468,8 @@ function addLightBox()
 
 			//Create form
 			var formElem = document.createElement('form');
+			//onsubmit attribute of form returns false so the page is not refreshing itself by default
+			formElem.setAttribute('onsubmit', 'return false');
 
 				//Create input text field
 				captionTextField = document.createElement('input');
@@ -477,7 +479,7 @@ function addLightBox()
 				//Create 'Save Caption' button
 				captionButton = document.createElement('input');
 				captionButton.setAttribute('id', 'captionButton');
-				captionButton.setAttribute('type', 'button');
+				captionButton.setAttribute('type', 'submit');
 				captionButton.setAttribute('value', 'Save Caption');
 				captionButton.addEventListener('click', saveCircle);
 
@@ -516,6 +518,9 @@ function drawLabel(X, Y, stroke, name)
 
 	//Change font size and type of context before getting the width of the circle name text
 	context.font = "bold 20px Arial";
+
+	//Trim circle name string
+	name = name.trim();
 
 	//Get the width of the text
 	textWidth = context.measureText(name).width;
@@ -587,6 +592,7 @@ function playBack()
 	playButton.addEventListener('click', function() {
 		clearTimeout(timedPlayback);
 		clearTimeout(lastCyclePlayBack);
+		clearTimeout(removePopUpLabel);
 		playButton.addEventListener('click', playBack);
 		clearEntireCanvas();
 		playBack();
@@ -706,12 +712,26 @@ function drawPlayBack()
 		savedLinesForPlayback[playBackCounter] = currentLine;
 	}
 
-	//Call labelCoords function to calculate the coordinates of the pop-up label next to the circle
-	var lCoords = labelCoords(currentCircle.X, currentCircle.Y, currentCircle.circleName);
+	//If circle name is not an empty string
+	if(currentCircle.circleName.trim().length > 0)
+	{
+		//Call labelCoords function to calculate the coordinates of the pop-up label next to the circle
+		var lCoords = labelCoords(currentCircle.X, currentCircle.Y, currentCircle.circleName);
 
-	//Draw pop-up label
-	drawLabel(lCoords[0], lCoords[1], true, currentCircle.circleName);
-	drawLabel(lCoords[0], lCoords[1], false, currentCircle.circleName);
+		//Draw pop-up label
+		drawLabel(lCoords[0], lCoords[1], true, currentCircle.circleName);
+		drawLabel(lCoords[0], lCoords[1], false, currentCircle.circleName);
+
+		/**
+		 *	This timeout call fires slightly before the next iteration of the playback starts, so
+		 *	the pop-up label disappears slightly before the next circle is drawn to the canvas.
+		 */
+		removePopUpLabel = setTimeout(function() {
+			//Redraw without last label at the end of playback
+			clearEntireCanvas();
+			redrawPreviousObjects();
+		}, 1500);
+	}
 }
 
 /**
